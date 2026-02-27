@@ -1,0 +1,7 @@
+interface:
+  display_name: "Malloy Warehouse Migration"
+  short_description: "Model Hive warehouses to Malloy with automation."
+  default_prompt: "Use $malloy-warehouse-migration to plan and execute migration from Hive tables and HiveSQL jobs into Malloy semantic models with GitHub workflow controls."
+
+policy:
+  allow_implicit_invocation: true

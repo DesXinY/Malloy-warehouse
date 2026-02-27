@@ -1,0 +1,69 @@
+version: 1
+project: malloy-warehouse-migration
+owners:
+  semantic_owner: data-modeling-team
+  migration_owner: data-platform-team
+
+sources:
+  - name: orders
+    table: dw.orders
+    primary_key: order_id
+    dimensions:
+      - name: order_date
+        expr: order_ts.day
+      - name: customer_id
+        expr: customer_id
+      - name: sales_channel
+        expr: sales_channel
+    measures:
+      - name: order_cnt
+        expr: count()
+      - name: gross_revenue
+        expr: sum(order_amount)
+    joins:
+      - name: customers
+        relationship: one
+        target_source: customers
+        on: orders.customer_id = customers.customer_id
+    legacy_refs:
+      hive_tables:
+        - dwd.orders
+      hql_jobs:
+        - job_sales_orders_daily
+
+  - name: customers
+    table: dw.customers
+    primary_key: customer_id
+    dimensions:
+      - name: customer_tier
+        expr: tier
+      - name: signup_date
+        expr: signup_ts.day
+    measures:
+      - name: customer_cnt
+        expr: count()
+    legacy_refs:
+      hive_tables:
+        - dim.customers
+      hql_jobs:
+        - job_dim_customers_refresh
+
+queries:
+  - name: orders_daily
+    from: orders
+    group_by:
+      - order_date
+      - sales_channel
+    aggregate:
+      - order_cnt
+      - gross_revenue
+    where: order_date >= @start_date
+    legacy_refs:
+      hql_jobs:
+        - job_sales_orders_daily
+
+migration_policy:
+  dual_run_days: 14
+  parity_threshold:
+    revenue_relative_delta: "0.1%"
+    volume_relative_delta: "0.5%"

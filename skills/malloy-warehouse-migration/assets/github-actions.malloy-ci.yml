@@ -1,0 +1,30 @@
+name: malloy-ci
+
+on:
+  pull_request:
+    paths:
+      - "malloy/**/*.malloy"
+      - "mappings/**/*.yaml"
+
+jobs:
+  lint-and-compile:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup runtime
+        run: echo "Install Malloy CLI and dependencies here"
+      - name: Validate mapping file
+        run: |
+          python skills/malloy-warehouse-migration/scripts/migration_readiness_report.py \
+            --mapping mappings/migration-map.yaml \
+            --out reports/readiness.md
+      - name: Compile Malloy models
+        run: echo "Run Malloy compile/check command here"
+
+  parity-smoke-check:
+    runs-on: ubuntu-latest
+    needs: lint-and-compile
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run parity smoke test
+        run: echo "Compare sampled legacy vs Malloy metrics"
